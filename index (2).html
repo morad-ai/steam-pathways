@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STEAM PEI Career Pathways</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root{
+    --bg:#0D2436;
+    --panel:#142F44;
+    --panel-hover:#1A3A54;
+    --ink:#F2EFE6;
+    --ink-muted:#9FB3C0;
+    --line:rgba(242,239,230,0.12);
+
+    --c-science:#3FA88A;
+    --c-technology:#4F8FC0;
+    --c-engineering:#C0562E;
+    --c-arts:#7D82B8;
+    --c-math:#D9A441;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* subtle wayfinding grid backdrop */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:64px 64px;
+    opacity:0.35;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  header{
+    position:relative; z-index:1;
+    max-width:1080px;
+    margin:0 auto;
+    padding:48px 24px 24px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ink-muted);
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:8px; height:8px;
+    border-radius:50%;
+    background:var(--c-science);
+    box-shadow:0 0 0 3px rgba(63,168,138,0.25);
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(32px,6vw,52px);
+    line-height:1.05;
+    margin:14px 0 10px;
+    letter-spacing:-0.01em;
+  }
+  header p.sub{
+    color:var(--ink-muted);
+    font-size:16px;
+    max-width:520px;
+    line-height:1.5;
+    margin:0;
+  }
+
+  .controls{
+    position:relative; z-index:1;
+    max-width:1080px;
+    margin:0 auto;
+    padding:8px 24px 32px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .search{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 16px;
+  }
+  .search input{
+    background:none;
+    border:none;
+    outline:none;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    width:100%;
+  }
+  .search input::placeholder{color:var(--ink-muted);}
+  .search svg{flex-shrink:0; opacity:0.6;}
+
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .chip{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:0.03em;
+    padding:8px 14px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink-muted);
+    cursor:pointer;
+    display:flex; align-items:center; gap:7px;
+    transition:all 0.15s ease;
+  }
+  .chip:hover{border-color:var(--ink-muted);}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .chip[data-active="true"]{
+    color:var(--bg);
+    border-color:transparent;
+    font-weight:600;
+  }
+  .chip[data-cat="all"][data-active="true"]{background:var(--ink); color:var(--bg);}
+  .chip[data-cat="science"][data-active="true"]{background:var(--c-science);}
+  .chip[data-cat="technology"][data-active="true"]{background:var(--c-technology);}
+  .chip[data-cat="engineering"][data-active="true"]{background:var(--c-engineering);}
+  .chip[data-cat="arts"][data-active="true"]{background:var(--c-arts);}
+  .chip[data-cat="math"][data-active="true"]{background:var(--c-math);}
+  .chip[data-cat="science"]{color:var(--c-science);}
+  .chip[data-cat="technology"]{color:var(--c-technology);}
+  .chip[data-cat="engineering"]{color:var(--c-engineering);}
+  .chip[data-cat="arts"]{color:var(--c-arts);}
+  .chip[data-cat="math"]{color:var(--c-math);}
+
+  main{
+    position:relative; z-index:1;
+    max-width:1080px;
+    margin:0 auto;
+    padding:0 24px 80px;
+  }
+
+  #status{
+    color:var(--ink-muted);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    padding:40px 0;
+    text-align:center;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:16px;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, transform 0.15s ease;
+  }
+  .card:hover{border-color:var(--ink-muted); transform:translateY(-2px);}
+
+  .card-top{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  .card-top .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+  .card h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:20px;
+    font-weight:600;
+    margin:0 0 6px;
+    line-height:1.25;
+  }
+  .card .company{
+    color:var(--ink-muted);
+    font-size:13.5px;
+    margin:0 0 12px;
+    font-weight:500;
+  }
+  .card .oneliner{
+    font-size:14px;
+    line-height:1.5;
+    color:var(--ink);
+    opacity:0.85;
+    margin:0;
+  }
+  .card .expand-hint{
+    margin-top:16px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--ink-muted);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  /* modal */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(6,15,22,0.72);
+    backdrop-filter:blur(3px);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    z-index:10;
+  }
+  .overlay.open{display:flex;}
+  @media(min-width:640px){
+    .overlay{align-items:center;}
+  }
+
+  .modal{
+    background:var(--panel);
+    width:100%;
+    max-width:560px;
+    max-height:88vh;
+    overflow-y:auto;
+    border-radius:20px 20px 0 0;
+    padding:32px 26px 40px;
+    position:relative;
+    border-top:1px solid var(--line);
+  }
+  @media(min-width:640px){
+    .modal{border-radius:18px;}
+  }
+
+  .modal .close{
+    position:absolute;
+    top:20px; right:20px;
+    width:32px; height:32px;
+    border-radius:50%;
+    background:rgba(242,239,230,0.08);
+    border:none;
+    color:var(--ink);
+    font-size:16px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .modal .card-top{margin-bottom:18px;}
+  .modal h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:28px;
+    font-weight:700;
+    margin:0 0 6px;
+    line-height:1.15;
+    padding-right:30px;
+  }
+  .modal .company{
+    color:var(--ink-muted);
+    font-size:15px;
+    margin:0 0 24px;
+  }
+  .modal .company a{color:var(--ink-muted);}
+
+  .field{margin-bottom:22px;}
+  .field-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-muted);
+    margin-bottom:8px;
+  }
+  .field-body{font-size:15px; line-height:1.6; white-space:pre-line;}
+
+  .stat-row{
+    display:flex;
+    gap:12px;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+  }
+  .stat{
+    flex:1;
+    min-width:130px;
+    background:rgba(242,239,230,0.05);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+  }
+  .stat .field-label{margin-bottom:4px;}
+  .stat .stat-value{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+  }
+
+  .trail{
+    border-left:2px dotted var(--line);
+    margin-left:6px;
+    padding-left:20px;
+    margin-top:8px;
+  }
+  .trail-point{position:relative; margin-bottom:14px; font-size:14.5px; line-height:1.5;}
+  .trail-point:last-child{margin-bottom:0;}
+  .trail-point::before{
+    content:"";
+    position:absolute;
+    left:-25.5px; top:5px;
+    width:9px; height:9px;
+    border-radius:50%;
+    background:var(--bg);
+    border:2px solid var(--ink-muted);
+  }
+  .trail-point.now::before{background:var(--c-technology); border-color:var(--c-technology);}
+
+  a.site-link{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    color:var(--ink);
+    font-size:14px;
+    text-decoration:none;
+    border-bottom:1px solid var(--ink-muted);
+    padding-bottom:2px;
+  }
+
+  footer{
+    position:relative; z-index:1;
+    text-align:center;
+    padding:20px 24px 60px;
+    color:var(--ink-muted);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">STEAM PEI &nbsp;/&nbsp; Career Fair Directory</div>
+  <h1>Chart your path.</h1>
+  <p class="sub">Real jobs at real Island companies. Tap any card to see what the work actually looks like, what it takes to get there, and where it can lead.</p>
+</header>
+
+<div class="controls">
+  <div class="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="searchInput" type="text" placeholder="Search a job title, company, or field...">
+  </div>
+  <div class="chips" id="chips">
+    <button class="chip" data-cat="all" data-active="true"><span class="dot"></span>All</button>
+    <button class="chip" data-cat="science"><span class="dot"></span>Science</button>
+    <button class="chip" data-cat="technology"><span class="dot"></span>Technology</button>
+    <button class="chip" data-cat="engineering"><span class="dot"></span>Engineering</button>
+    <button class="chip" data-cat="arts"><span class="dot"></span>Arts</button>
+    <button class="chip" data-cat="math"><span class="dot"></span>Math</button>
+  </div>
+</div>
+
+<main>
+  <div id="status">Loading career pathways...</div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>Built for the STEAM PEI career exploration event</footer>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — paste your published Google Sheet CSV link below.
+   File > Share > Publish to web > select the response sheet
+   tab > format CSV > Publish, then copy that URL here.
+   ============================================================ */
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSm2e-vdDo678cdkz528Or752T0y0Q89n_4vCbcIlHBhVc67vl7GbAQgGShxcjW_HjeLi04-9EWJmhU/pub?gid=393064514&single=true&output=csv";
+
+/* Expected Google Form column headers (edit the map below if
+   your form uses different exact wording): */
+const COLS = {
+  company:     "Company Name",
+  title:       "Job Title",
+  category:    "STEAM Category",
+  oneliner:    "One-line Description",
+  description: "Full description of the job",
+  education:   "Education/Training Required",
+  salary:      "Salary Range",
+  pathway:     "Career pathway / how someone gets into this role (Step-by-step explanation encouraged)",
+  website:     "Company Website"
+};
+
+const CAT_COLORS = {
+  science:"var(--c-science)",
+  technology:"var(--c-technology)",
+  engineering:"var(--c-engineering)",
+  arts:"var(--c-arts)",
+  math:"var(--c-math)"
+};
+
+let ALL_JOBS = [];
+let activeCat = "all";
+let searchTerm = "";
+
+function normCat(raw){
+  const c = (raw||"").trim().toLowerCase();
+  if(["science","technology","engineering","arts","math"].includes(c)) return c;
+  return "science";
+}
+
+function render(){
+  const grid = document.getElementById("grid");
+  const status = document.getElementById("status");
+  const filtered = ALL_JOBS.filter(j=>{
+    const matchesCat = activeCat==="all" || j.category===activeCat;
+    const hay = (j.title+" "+j.company+" "+j.oneliner).toLowerCase();
+    const matchesSearch = hay.includes(searchTerm.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
+
+  if(filtered.length===0){
+    status.style.display="block";
+    status.textContent = ALL_JOBS.length===0
+      ? "No jobs yet — check back soon."
+      : "No matches. Try a different search or category.";
+    grid.innerHTML="";
+    return;
+  }
+  status.style.display="none";
+  grid.innerHTML = filtered.map((j,i)=>`
+    <div class="card" data-index="${ALL_JOBS.indexOf(j)}">
+      <div class="card-top" style="color:${CAT_COLORS[j.category]}">
+        <span class="dot" style="background:${CAT_COLORS[j.category]}"></span>${j.category}
+      </div>
+      <h3>${escapeHtml(j.title)}</h3>
+      <p class="company">${escapeHtml(j.company)}</p>
+      <p class="oneliner">${escapeHtml(j.oneliner)}</p>
+      <div class="expand-hint">Tap to explore &nbsp;→</div>
+    </div>
+  `).join("");
+
+  grid.querySelectorAll(".card").forEach(card=>{
+    card.addEventListener("click",()=>openModal(ALL_JOBS[card.dataset.index]));
+  });
+}
+
+function openModal(j){
+  const modal = document.getElementById("modal");
+  const overlay = document.getElementById("overlay");
+  const color = CAT_COLORS[j.category];
+
+  const pathwaySteps = (j.pathway||"").split(/\n|;/).map(s=>s.trim()).filter(Boolean);
+
+  modal.innerHTML = `
+    <button class="close" id="closeBtn">✕</button>
+    <div class="card-top" style="color:${color}"><span class="dot" style="background:${color}"></span>${j.category}</div>
+    <h2>${escapeHtml(j.title)}</h2>
+    <p class="company">${escapeHtml(j.company)}${j.website ? ` &nbsp;·&nbsp; <a href="${escapeAttr(j.website)}" target="_blank" rel="noopener">visit site</a>` : ""}</p>
+
+    <div class="stat-row">
+      <div class="stat">
+        <div class="field-label">Education</div>
+        <div class="stat-value">${escapeHtml(j.education || "—")}</div>
+      </div>
+      <div class="stat">
+        <div class="field-label">Salary range</div>
+        <div class="stat-value">${escapeHtml(j.salary || "—")}</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">What the job is</div>
+      <div class="field-body">${escapeHtml(j.description || j.oneliner)}</div>
+    </div>
+
+    ${pathwaySteps.length ? `
+    <div class="field">
+      <div class="field-label">The path there</div>
+      <div class="trail">
+        ${pathwaySteps.map((s,i)=>`<div class="trail-point ${i===pathwaySteps.length-1?'now':''}">${escapeHtml(s)}</div>`).join("")}
+      </div>
+    </div>` : ""}
+  `;
+  overlay.classList.add("open");
+  document.getElementById("closeBtn").addEventListener("click", closeModal);
+}
+function closeModal(){document.getElementById("overlay").classList.remove("open");}
+document.getElementById("overlay").addEventListener("click",e=>{
+  if(e.target.id==="overlay") closeModal();
+});
+
+function escapeHtml(str){
+  return (str||"").toString()
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function escapeAttr(str){
+  let s = (str||"").toString();
+  if(s && !/^https?:\/\//i.test(s)) s = "https://"+s;
+  return s.replace(/"/g,"&quot;");
+}
+
+document.getElementById("chips").addEventListener("click",e=>{
+  const chip = e.target.closest(".chip");
+  if(!chip) return;
+  document.querySelectorAll(".chip").forEach(c=>c.dataset.active="false");
+  chip.dataset.active="true";
+  activeCat = chip.dataset.cat;
+  render();
+});
+document.getElementById("searchInput").addEventListener("input",e=>{
+  searchTerm = e.target.value;
+  render();
+});
+
+function loadData(){
+  if(CSV_URL.includes("PASTE_YOUR")){
+    document.getElementById("status").textContent =
+      "Set CSV_URL at the top of the script to your published Google Sheet link.";
+    return;
+  }
+  Papa.parse(CSV_URL,{
+    download:true,
+    header:true,
+    skipEmptyLines:true,
+    complete:function(results){
+      ALL_JOBS = results.data.map(row=>({
+        company: row[COLS.company] || "",
+        title: row[COLS.title] || "",
+        category: normCat(row[COLS.category]),
+        oneliner: row[COLS.oneliner] || "",
+        description: row[COLS.description] || "",
+        education: row[COLS.education] || "",
+        salary: row[COLS.salary] || "",
+        pathway: row[COLS.pathway] || "",
+        website: row[COLS.website] || ""
+      })).filter(j=>j.title && j.company);
+      render();
+    },
+    error:function(){
+      document.getElementById("status").textContent =
+        "Couldn't load the sheet. Double check the CSV link is public and correctly published.";
+    }
+  });
+}
+loadData();
+</script>
+</body>
+</html>
