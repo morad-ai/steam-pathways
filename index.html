@@ -434,7 +434,11 @@ let searchTerm = "";
 
 function normCat(raw){
   const c = (raw||"").trim().toLowerCase();
-  if(["science","technology","engineering","arts","math","trades"].includes(c)) return c;
+  if(c.includes("trade")) return "trades";
+  if(["science","technology","engineering","arts","math"].includes(c)) return c;
+  if(c){
+    console.warn('Unrecognized STEAM Category value "'+raw+'" — defaulting to Science. Check the form answer text for this entry.');
+  }
   return "science";
 }
 
