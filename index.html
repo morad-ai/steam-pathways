@@ -291,17 +291,25 @@
     color:var(--ink-muted);
     margin-bottom:8px;
   }
-  .field-body{font-size:15px; line-height:1.6; white-space:pre-line;}
+  .field-body{
+    font-size:15px;
+    line-height:1.6;
+    white-space:pre-line;
+    overflow-wrap:break-word;
+    word-break:break-word;
+  }
 
+  /* Stats now stack full-width instead of sitting side-by-side,
+     so a long salary range or education string has room to wrap
+     without crowding its neighbor. */
   .stat-row{
     display:flex;
+    flex-direction:column;
     gap:12px;
     margin-bottom:24px;
-    flex-wrap:wrap;
   }
   .stat{
-    flex:1;
-    min-width:130px;
+    width:100%;
     background:rgba(242,239,230,0.05);
     border:1px solid var(--line);
     border-radius:10px;
@@ -311,6 +319,10 @@
   .stat .stat-value{
     font-family:'IBM Plex Mono',monospace;
     font-size:15px;
+    line-height:1.5;
+    overflow-wrap:break-word;
+    word-break:break-word;
+    white-space:normal;
   }
 
   .trail{
