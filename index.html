@@ -21,6 +21,7 @@
     --c-engineering:#C0562E;
     --c-arts:#7D82B8;
     --c-math:#D9A441;
+    --c-trades:#8A97A6;
   }
 
   *{box-sizing:border-box;}
@@ -174,11 +175,13 @@
   .chip[data-cat="engineering"][data-active="true"]{background:var(--c-engineering); color:var(--bg); box-shadow:0 0 0 3px rgba(192,86,46,0.35);}
   .chip[data-cat="arts"][data-active="true"]{background:var(--c-arts); color:var(--bg); box-shadow:0 0 0 3px rgba(125,130,184,0.35);}
   .chip[data-cat="math"][data-active="true"]{background:var(--c-math); color:var(--bg); box-shadow:0 0 0 3px rgba(217,164,65,0.35);}
+  .chip[data-cat="trades"][data-active="true"]{background:var(--c-trades); color:var(--bg); box-shadow:0 0 0 3px rgba(138,151,166,0.35);}
   .chip[data-cat="science"]{color:var(--c-science);}
   .chip[data-cat="technology"]{color:var(--c-technology);}
   .chip[data-cat="engineering"]{color:var(--c-engineering);}
   .chip[data-cat="arts"]{color:var(--c-arts);}
   .chip[data-cat="math"]{color:var(--c-math);}
+  .chip[data-cat="trades"]{color:var(--c-trades);}
 
   main{
     position:relative; z-index:1;
@@ -377,6 +380,7 @@
     <button class="chip" data-cat="engineering"><span class="dot"></span>Engineering</button>
     <button class="chip" data-cat="arts"><span class="dot"></span>Arts</button>
     <button class="chip" data-cat="math"><span class="dot"></span>Math</button>
+    <button class="chip" data-cat="trades"><span class="dot"></span>Trades</button>
   </div>
 </div>
 
@@ -420,7 +424,8 @@ const CAT_COLORS = {
   technology:"var(--c-technology)",
   engineering:"var(--c-engineering)",
   arts:"var(--c-arts)",
-  math:"var(--c-math)"
+  math:"var(--c-math)",
+  trades:"var(--c-trades)"
 };
 
 let ALL_JOBS = [];
@@ -429,7 +434,7 @@ let searchTerm = "";
 
 function normCat(raw){
   const c = (raw||"").trim().toLowerCase();
-  if(["science","technology","engineering","arts","math"].includes(c)) return c;
+  if(["science","technology","engineering","arts","math","trades"].includes(c)) return c;
   return "science";
 }
 
@@ -546,7 +551,9 @@ function loadData(){
     download:true,
     header:true,
     skipEmptyLines:true,
+    transformHeader:function(h){ return h.trim(); },
     complete:function(results){
+      console.log("CSV headers detected:", results.meta.fields);
       ALL_JOBS = results.data.map(row=>({
         company: row[COLS.company] || "",
         title: row[COLS.title] || "",
