@@ -406,12 +406,13 @@ const COLS = {
   title:       "Job Title",
   category:    "STEAM Category",
   oneliner:    "One-line Description",
-  description: "Full description of the job",
-  education:   "Education/Training Required",
-  courses:     "Required/Recommended High School Courses",
+  description: "Day in The Life",
+  education:   "Educational Requirement",
+  courses:     "Required/Recommanded Highschool Courses",
   salary:      "Salary Range",
-  companyOverview: "Company Overview",
-  website:     "Company Website"
+  pathway:     "Career Pathway",
+  website:     "Company Website",
+  companyOverview: "Company Overview"
 };
 
 const CAT_COLORS = {
@@ -555,8 +556,9 @@ function loadData(){
         education: row[COLS.education] || "",
         courses: row[COLS.courses] || "",
         salary: row[COLS.salary] || "",
-        companyOverview: row[COLS.companyOverview] || "",
-        website: row[COLS.website] || ""
+        pathway: row[COLS.pathway] || "",
+        website: row[COLS.website] || "",
+        companyOverview: row[COLS.companyOverview] || ""
       })).filter(j=>j.title && j.company);
       render();
     },
